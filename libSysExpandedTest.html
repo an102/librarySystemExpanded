@@ -1,0 +1,220 @@
+<script src="../libSysExpanded-master/simpletest.js"></script>
+<script src="../libSysExpanded-master/libSysExpanded.js"></script>
+<script>
+    tests({
+        '(1) Should store and return libraries that have no dependencies': function () {
+            librarySystem("sampleLibrary", [], function () {
+                return {
+                    description: "Sample library for testing",
+                    testNum: 1
+                };
+            });
+
+            var expectedResult = {
+                description: "Sample library for testing",
+                testNum: 1
+            }
+
+            // additional variables required for testing; because lib objects cannot be compared directly, their corresponding keys and values are tested
+            var sampleLibraryKeyArray = Object.keys(librarySystem("sampleLibrary"));
+            var expectedResultKeyArray = Object.keys(expectedResult);
+            var sampleLibraryValueArray = Object.values(librarySystem("sampleLibrary"));
+            var expectedResultValueArray = Object.values(expectedResult);
+            var lengthOfSampleLibrary = sampleLibraryKeyArray.length;
+            var lengthOfExpectedResult = expectedResultKeyArray.length;
+
+            eq(lengthOfSampleLibrary, lengthOfExpectedResult);
+
+            for (var i = 0; i < lengthOfSampleLibrary; i++) {
+                eq(sampleLibraryKeyArray[i], expectedResultKeyArray[i]);
+                eq(sampleLibraryValueArray[i], expectedResultValueArray[i]);
+            }
+        },
+        '(2) Should store and return libraries that have dependencies': function () {
+            librarySystem("dependencyOneTest2", [], function () {
+                return {
+                    description: "First dependency library for testing",
+                    dependencyNum: 1
+                };
+            });
+
+            librarySystem("dependencyTwoTest2", [], function () {
+                return {
+                    description: "Second dependency library for testing",
+                    dependencyNum: 2
+                };
+            });
+
+            librarySystem("dependentLibraryTest2", ["dependencyOneTest2", "dependencyTwoTest2"], function (dependencyOneTest2, dependencyTwoTest2) {
+                return {
+                    description: "Dependent library for testing",
+                    dependencyOne: "This library requires dependency #"
+                        + dependencyOneTest2.dependencyNum + " (" + dependencyOneTest2.description + ")",
+                    dependencyTwo: "This library requires dependency #"
+                        + dependencyTwoTest2.dependencyNum + " (" + dependencyTwoTest2.description + ")"
+                };
+            });
+
+            var expectedResult = {
+                description: "Dependent library for testing",
+                dependencyOne: "This library requires dependency #1 (First dependency library for testing)",
+                dependencyTwo: "This library requires dependency #2 (Second dependency library for testing)"
+            }
+
+            // additional variables required for testing
+            var dependentLibraryKeyArray = Object.keys(librarySystem("dependentLibraryTest2"));
+            var expectedResultKeyArray = Object.keys(expectedResult);
+            var dependentLibraryValueArray = Object.values(librarySystem("dependentLibraryTest2"));
+            var expectedResultValueArray = Object.values(expectedResult);
+            var lengthOfDependentLibrary = dependentLibraryKeyArray.length;
+            var lengthOfExpectedResult = expectedResultKeyArray.length;
+
+            eq(lengthOfDependentLibrary, lengthOfExpectedResult);
+
+            for (var i = 0; i < lengthOfDependentLibrary; i++) {
+                eq(dependentLibraryKeyArray[i], expectedResultKeyArray[i]);
+                eq(dependentLibraryValueArray[i], expectedResultValueArray[i]);
+            }
+        },
+        '(3) Should store and return libraries that have dependencies even when dependencies are stored afterward': function () {
+            librarySystem("dependentLibraryTest3", ["dependencyOneTest3", "dependencyTwoTest3"], function (dependencyOneTest3, dependencyTwoTest3) {
+                return {
+                    description: "Dependent library for testing",
+                    dependencyOne: "This library requires dependency #"
+                        + dependencyOneTest3.dependencyNum + " (" + dependencyOneTest3.description + ")",
+                    dependencyTwo: "This library requires dependency #"
+                        + dependencyTwoTest3.dependencyNum + " (" + dependencyTwoTest3.description + ")"
+                };
+            });
+
+            librarySystem("dependencyOneTest3", [], function () {
+                return {
+                    description: "First dependency library for testing",
+                    dependencyNum: 1
+                };
+            });
+
+            librarySystem("dependencyTwoTest3", [], function () {
+                return {
+                    description: "Second dependency library for testing",
+                    dependencyNum: 2
+                };
+            });
+
+            var expectedResult = {
+                description: "Dependent library for testing",
+                dependencyOne: "This library requires dependency #1 (First dependency library for testing)",
+                dependencyTwo: "This library requires dependency #2 (Second dependency library for testing)"
+            }
+
+            // additional variables required for testing
+            var dependentLibraryKeyArray = Object.keys(librarySystem("dependentLibraryTest3"));
+            var expectedResultKeyArray = Object.keys(expectedResult);
+            var dependentLibraryValueArray = Object.values(librarySystem("dependentLibraryTest3"));
+            var expectedResultValueArray = Object.values(expectedResult);
+            var lengthOfDependentLibrary = dependentLibraryKeyArray.length;
+            var lengthOfExpectedResult = expectedResultKeyArray.length;
+
+            eq(lengthOfDependentLibrary, lengthOfExpectedResult);
+
+            for (var i = 0; i < lengthOfDependentLibrary; i++) {
+                eq(dependentLibraryKeyArray[i], expectedResultKeyArray[i]);
+                eq(dependentLibraryValueArray[i], expectedResultValueArray[i]);
+            }
+        },
+        '(4) Should ensure that each library callback runs only once; throws an error if create case is run more than once on the same library': function () {
+            librarySystem("dependentLibraryTest4", ["dependencyOneTest4", "dependencyTwoTest4"], function (dependencyOneTest4, dependencyTwoTest4) {
+                return {
+                    description: "Dependent library for testing",
+                    dependencyOne: "This library requires dependency #"
+                        + dependencyOneTest4.dependencyNum + " (" + dependencyOneTest4.description + ")",
+                    dependencyTwo: "This library requires dependency #"
+                        + dependencyTwoTest4.dependencyNum + " (" + dependencyTwoTest4.description + ")"
+                };
+            });
+
+            librarySystem("dependencyOneTest4", [], function () {
+                return {
+                    description: "First dependency library for testing",
+                    dependencyNum: 1
+                };
+            });
+
+            librarySystem("dependencyTwoTest4", [], function () {
+                return {
+                    description: "Second dependency library for testing",
+                    dependencyNum: 2
+                };
+            });
+
+            var expectedResult = {
+                description: "Dependent library for testing",
+                dependencyOne: "This library requires dependency #1 (First dependency library for testing)",
+                dependencyTwo: "This library requires dependency #2 (Second dependency library for testing)"
+            }
+
+            // attempt to rerun create case on dependent library
+            try {
+                librarySystem("dependentLibraryTest4", ["dependencyOneTest4", "dependencyTwoTest4"], function (dependencyOneTest4, dependencyTwoTest4) {
+                    return {
+                        description: "Dependent library for testing",
+                        dependencyOne: "This library requires dependency #"
+                            + dependencyOneTest4.dependencyNum + " (" + dependencyOneTest4.description + ")",
+                        dependencyTwo: "This library requires dependency #"
+                            + dependencyTwoTest4.dependencyNum + " (" + dependencyTwoTest4.description + ")"
+                    };
+                });
+            } catch (e) {
+                eq(e instanceof Error, true);
+            }
+
+            // attempt to rerun create case on first dependency library
+            try {
+                librarySystem("dependencyOneTest4", [], function () {
+                    return {
+                        description: "First dependency library for testing",
+                        dependencyNum: 1
+                    };
+                });
+            } catch (e) {
+                eq(e instanceof Error, true);
+            }
+
+            // attempt to rerun create case on second dependency library
+            try {
+                librarySystem("dependencyTwoTest4", [], function () {
+                    return {
+                        description: "Second dependency library for testing",
+                        dependencyNum: 2
+                    };
+                });
+            } catch (e) {
+                eq(e instanceof Error, true);
+            }
+        },
+        '(5) If a dependency is missing for a stored library, an error is thrown': function () {
+            librarySystem("dependentLibraryTest5", ["dependencyOneTest5", "dependencyTwoTest5"], function (dependencyOneTest5, dependencyTwoTest5) {
+                return {
+                    description: "Dependent library for testing",
+                    dependencyOne: "This library requires dependency #"
+                        + dependencyOneTest4.dependencyNum + " (" + dependencyOneTest5.description + ")",
+                    dependencyTwo: "This library requires dependency #"
+                        + dependencyTwoTest4.dependencyNum + " (" + dependencyTwoTest5.description + ")"
+                };
+            });
+
+            librarySystem("dependencyOneTest5", [], function () {
+                return {
+                    description: "First dependency library for testing",
+                    dependencyNum: 1
+                };
+            });
+
+            try {
+                librarySystem("profile")
+            } catch (e) {
+                (e instanceof Error, true);
+            }
+        }
+    });
+</script>
